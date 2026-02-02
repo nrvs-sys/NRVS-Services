@@ -27,10 +27,10 @@ using WebSocketSharp;
 public class SteamManager : MonoBehaviour, IPlayerPlatform
 {
 	[SerializeField]
-	int applicationID;
+	ulong applicationID;
 
 	[SerializeField]
-	int demoApplicationID;
+	ulong demoApplicationID;
 
     /// <summary>
     /// Returns the Steam ID of the currently logged in player.
@@ -122,7 +122,7 @@ public class SteamManager : MonoBehaviour, IPlayerPlatform
 	/// <summary>
 	/// The Steam application ID for the project.
 	/// </summary>
-	public int appID =
+	public ulong appID =>
 #if !DEMO_MODE
 		applicationID;
 #else
