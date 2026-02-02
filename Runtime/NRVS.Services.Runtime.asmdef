@@ -1,0 +1,20 @@
+{
+    "name": "NRVS.Services.Runtime",
+    "rootNamespace": "NRVS.Services",
+    "references": [
+        "GUID:437b2184bacff1240898755753882399",
+        "GUID:29492541a59d04a81b47a7f225e8a22d",
+        "GUID:14165214884ae4a619bfb290f28194a7",
+        "GUID:607e5fc428cee124e9280c8cd460767b",
+        "GUID:eec0964c48f6f4e40bc3ec2257ccf8c5"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

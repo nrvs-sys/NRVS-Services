@@ -1,0 +1,18 @@
+{
+    "name": "NRVS.Services.Standalone.Runtime",
+    "rootNamespace": "NRVS.Services.Standalone",
+    "references": [
+        "GUID:ff101ae825a863b4e94a5cec83a00bff",
+        "GUID:70ca36f59499339459eed5ac12d7ea0c",
+        "GUID:437b2184bacff1240898755753882399"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,26 @@
+{
+    "name": "Services.Edgegap.Runtime",
+    "rootNamespace": "",
+    "references": [
+        "GUID:174fee87767d3c7458def8e56b5ebc03",
+        "GUID:437b2184bacff1240898755753882399",
+        "GUID:70ca36f59499339459eed5ac12d7ea0c",
+        "GUID:b33c878b227a47f4db25f6907d2c0ff2",
+        "GUID:58ff3a2ca929d114eaf0ca373ff1e07a",
+        "GUID:4c3f49d89436d478ea78315c03159dcc",
+        "GUID:29492541a59d04a81b47a7f225e8a22d",
+        "GUID:14165214884ae4a619bfb290f28194a7",
+        "GUID:7c88a4a7926ee5145ad2dfa06f454c67",
+        "GUID:7d42cb1a1797d4e4495dd62e1ace8780",
+        "GUID:6686e5aeda6fe694980fc4ee5fa9c3b9"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

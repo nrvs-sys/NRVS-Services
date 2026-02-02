@@ -1,0 +1,30 @@
+{
+    "name": "NRVS.Services.UGS.Runtime",
+    "rootNamespace": "NRVS.Services.UGS",
+    "references": [
+        "GUID:437b2184bacff1240898755753882399",
+        "GUID:70ca36f59499339459eed5ac12d7ea0c",
+        "GUID:2e272572a4af02a43ae294dd4267a691",
+        "GUID:709242246f290134cac277fedc9f0492",
+        "GUID:5e0b455853cd340e0813387221dfd501",
+        "GUID:5540e30183c82e84b954c033c388e06c",
+        "GUID:fe25561d224ed4743af4c60938a59d0b",
+        "GUID:70ea675efa2644cef98c7ece24158333",
+        "GUID:4c3f49d89436d478ea78315c03159dcc",
+        "GUID:03058786646e84a4587858e9302c3f41",
+        "GUID:29492541a59d04a81b47a7f225e8a22d",
+        "GUID:14165214884ae4a619bfb290f28194a7",
+        "GUID:84651a3751eca9349aac36a66bba901b",
+        "GUID:776d03a35f1b52c4a9aed9f56d7b4229",
+        "GUID:174fee87767d3c7458def8e56b5ebc03"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

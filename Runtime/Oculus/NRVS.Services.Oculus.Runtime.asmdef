@@ -1,0 +1,20 @@
+{
+    "name": "NRVS.Services.Oculus.Runtime",
+    "rootNamespace": "NRVS.Services.Oculus",
+    "references": [
+        "GUID:437b2184bacff1240898755753882399",
+        "GUID:70ca36f59499339459eed5ac12d7ea0c",
+        "GUID:f64c9ebcd7899c3448a08dc9f9ddbe30",
+        "GUID:3b7cf88e9d6729441884290e764f086b",
+        "GUID:174fee87767d3c7458def8e56b5ebc03"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

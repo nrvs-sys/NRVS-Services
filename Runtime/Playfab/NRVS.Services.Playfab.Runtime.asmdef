@@ -1,0 +1,24 @@
+{
+    "name": "NRVS.Services.Playfab.Runtime",
+    "rootNamespace": "NRVS.Services.Playfab",
+    "references": [
+        "GUID:174fee87767d3c7458def8e56b5ebc03",
+        "GUID:70ca36f59499339459eed5ac12d7ea0c",
+        "GUID:437b2184bacff1240898755753882399",
+        "GUID:0da6d172d18a54e4389d0dce1e1ffdf2",
+        "GUID:eec0964c48f6f4e40bc3ec2257ccf8c5",
+        "GUID:894a6cc6ed5cd2645bb542978cbed6a9",
+        "GUID:29492541a59d04a81b47a7f225e8a22d",
+        "GUID:14165214884ae4a619bfb290f28194a7",
+        "GUID:84651a3751eca9349aac36a66bba901b"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
