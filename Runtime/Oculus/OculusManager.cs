@@ -2,8 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+#if ENABLE_OCULUS_SUPPORT
 using Oculus.Platform;
 using Oculus.Platform.Models;
+#endif
 using UnityEngine.Events;
 using UnityEngine.XR;
 
@@ -106,6 +108,7 @@ public class OculusManager : Singleton<OculusManager>, IPlayerPlatform
 	private readonly Dictionary<string, int> _pending = new();
 	private float _lastFlush;
 
+#if ENABLE_OCULUS_SUPPORT
 
 	protected override void OnSingletonInitialized()
 	{
@@ -314,7 +317,7 @@ public class OculusManager : Singleton<OculusManager>, IPlayerPlatform
 		}
 	}
 
-	#region Achievements
+    #region Achievements
 
 	public bool IsAchievementUnlocked(string key) => _unlocked.Contains(key);
 
@@ -428,7 +431,7 @@ public class OculusManager : Singleton<OculusManager>, IPlayerPlatform
 		});
 	}
 
-	#endregion
+    #endregion
 
 	// Try to complete any missing user info when internet becomes available
 	private void TryRefreshUser()
@@ -491,4 +494,39 @@ public class OculusManager : Singleton<OculusManager>, IPlayerPlatform
 			GetUserProof();
 		}
 	}
+#else
+
+    protected override void OnSingletonInitialized()
+    {
+        Debug.LogError("Oculus Manager: Oculus support is not enabled in project settings. OculusManager will not function.");
+    }
+
+    public bool IsAchievementUnlocked(string key)
+    {
+		Debug.LogError("Oculus Manager: Oculus support is not enabled in project settings. IsAchievementUnlocked will always return false.");
+		return false;
+    }
+
+    public void UnlockAchievement(string key)
+    {
+        Debug.LogError("Oculus Manager: Oculus support is not enabled in project settings. UnlockAchievement will not function.");
+    }
+
+    public int AddToStat(string statKey, int delta)
+    {
+        Debug.LogError("Oculus Manager: Oculus support is not enabled in project settings. AddToStat will not function.");
+        return 0;
+    }
+
+    public void CaptureStats()
+    {
+        Debug.LogError("Oculus Manager: Oculus support is not enabled in project settings. CaptureStats will not function.");
+    }
+
+    public void Flush()
+    {
+        Debug.LogError("Oculus Manager: Oculus support is not enabled in project settings. Flush will not function.");
+    }
+
+#endif
 }
