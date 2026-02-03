@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-#if ENABLE_OCULUS_SUPPORT
+#if PLAYERPLATFORM_OCULUS
 using Oculus.Platform;
 using Oculus.Platform.Models;
 #endif
@@ -108,7 +108,7 @@ public class OculusManager : Singleton<OculusManager>, IPlayerPlatform
 	private readonly Dictionary<string, int> _pending = new();
 	private float _lastFlush;
 
-#if ENABLE_OCULUS_SUPPORT
+#if PLAYERPLATFORM_OCULUS
 
 	protected override void OnSingletonInitialized()
 	{
@@ -401,7 +401,7 @@ public class OculusManager : Singleton<OculusManager>, IPlayerPlatform
 
 	public void Flush()
 	{
-		// Quest writes are immediate; just run queued ops if we’re back online
+		// Quest writes are immediate; just run queued ops if weï¿½re back online
 		if (isLoggedIn)
 		{
 			FlushPendingCounts();
