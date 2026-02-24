@@ -6,16 +6,18 @@ using UnityEngine.SceneManagement;
 public class PlatformServicesManager : MonoBehaviour
 {
 	[Header("Platform Scenes")]
+
 	public SceneReference standalonePlatformScene;
 	public SceneReference oculusPlatformScene;
 	public SceneReference steamPlatformScene;
-	public SceneReference UGSPlatformScene;
-	public SceneReference edgegapPlatformScene;
-	public SceneReference playFabPlatformScene;
+
+	[Space(10)]
+
+	public List<SceneReference> additionalPlatformScenes;
 
 	private void Start()
 	{
-        // Load the player platform
+		// Load the player platform
 #if PLAYERPLATFORM_STANDALONE
 		SceneManager.LoadSceneAsync(standalonePlatformScene, LoadSceneMode.Additive);
 #elif PLAYERPLATFORM_OCULUS
@@ -24,13 +26,9 @@ public class PlatformServicesManager : MonoBehaviour
 		SceneManager.LoadSceneAsync(steamPlatformScene, LoadSceneMode.Additive);
 #endif
 
-        // Load the UGS platform
-        SceneManager.LoadSceneAsync(UGSPlatformScene, LoadSceneMode.Additive);
-
-        // Load the Edgegap platform
-        SceneManager.LoadSceneAsync(edgegapPlatformScene, LoadSceneMode.Additive);
-
-        // Load the leaderboard platform
-        SceneManager.LoadSceneAsync(playFabPlatformScene, LoadSceneMode.Additive);
+		for (int i = 0; i < additionalPlatformScenes.Count; ++i)
+		{
+			SceneManager.LoadSceneAsync(additionalPlatformScenes[i], LoadSceneMode.Additive);
+		}
 	}
 }
