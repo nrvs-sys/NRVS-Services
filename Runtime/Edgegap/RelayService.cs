@@ -43,6 +43,18 @@ namespace Services.Edgegap
             public List<Users> users { get; set; }
         }
 
+        public class AuthorizeUserRequest
+        {
+            public string session_id { get; set; }
+            public string user_ip { get; set; }
+        }
+
+        public class RemoveUserRequest
+        {
+            public string session_id { get; set; }
+            public string authorization_token { get; set; }
+        }
+
         public class SessionResponse
         {
             public string session_id { get; set; }
@@ -54,6 +66,30 @@ namespace Services.Edgegap
             public List<SessionUser>? session_users { get; set; }
             public Relay relay { get; set; }
             public object? webhook_url { get; set; }
+        }
+
+        public class SessionListResponse
+        {
+            SessionResponse[] sessions;
+
+            PaginationResponse pagination;
+        }
+
+        public class PaginatorResponse
+        {
+            public int num_pages { get; set; }
+        }
+
+        public class PaginationResponse
+        {
+            public int number { get; set; }
+            public int next_page_number { get; set; }
+            public int previous_page_number { get; set; }
+
+            public PaginatorResponse paginator { get; set; }
+
+            public bool has_next { get; set; }
+            public bool has_previous { get; set; }
         }
 
         public class Server
@@ -83,6 +119,8 @@ namespace Services.Edgegap
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("token", relayProfileToken);
         }
 
+        #region API Methods
+
         public async Task<SessionResponse> CreateSessionAsync(List<String> clientIps)
         {
             //Set the Ips for the request
@@ -103,7 +141,7 @@ namespace Services.Edgegap
             HttpResponseMessage response = await httpClient.PostAsync($"{RelayUrl}/sessions", jsonContent);
 
             string responseContent = await response.Content.ReadAsStringAsync();
-            
+
             // Debug.Log("Relay Service: Session Creation POST response: " + responseContent);
 
             //Deserialize the response of the API
@@ -128,6 +166,97 @@ namespace Services.Edgegap
                                                 + "\nError: Couldn't found a session relay");
         }
 
+        public async Task<List<SessionResponse>> GetSessionsAsync(int? page, int? limit)
+        {
+            var url = $"{RelayUrl}/sessions";
+
+            if (page.HasValue || limit.HasValue)
+            {
+                url += "?";
+                if (page.HasValue)
+                {
+                    url += $"page={page.Value}&";
+                }
+                if (limit.HasValue)
+                {
+                    url += $"limit={limit.Value}&";
+                }
+                // Remove the trailing '&' if it exists
+                url = url.TrimEnd('&');
+            }
+
+            HttpResponseMessage response = await httpClient.GetAsync(url);
+            string responseContent = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<List<SessionResponse>>(responseContent);
+        }
+
+        public async Task<SessionResponse> GetSessionAsync(string sessionId)
+        {
+            HttpResponseMessage response = await httpClient.GetAsync($"{RelayUrl}/sessions/" + sessionId);
+            string responseContent = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<SessionResponse>(responseContent);
+        }
+
+        public async Task<SessionResponse> JoinSessionAsync(string sessionId)
+        {
+            HttpResponseMessage response = await httpClient.GetAsync($"{RelayUrl}/sessions/" + sessionId);
+
+            //Catch bad session ID
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new InvalidOperationException($"Error: {response.RequestMessage} - {response.ReasonPhrase}");
+            }
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<SessionResponse>(responseContent);
+        }
+
+        public async Task DeleteSessionAsync(string sessionId)
+        {
+            HttpResponseMessage response = await httpClient.DeleteAsync($"{RelayUrl}/sessions/" + sessionId);
+            //Catch bad session ID
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new InvalidOperationException($"Error: {response.RequestMessage} - {response.ReasonPhrase}");
+            }
+        }
+
+        public async Task<SessionResponse> AuthorizeUserAsync(string sessionId, string userIp)
+        {
+            var requestData = new AuthorizeUserRequest
+            {
+                session_id = sessionId,
+                user_ip = userIp
+            };
+
+            var jsonContent = new StringContent(JsonConvert.SerializeObject(requestData), Encoding.UTF8, Constants.Services.Edgegap.API.JsonHeaderType);
+            HttpResponseMessage response = await httpClient.PostAsync($"{RelayUrl}/sessions:authorize-user", jsonContent);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new InvalidOperationException($"Error: {response.RequestMessage} - {response.ReasonPhrase}");
+            }
+            string responseContent = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<SessionResponse>(responseContent);
+        }
+
+        public async Task<SessionResponse> RemoveUserAsync(string sessionId, string authorizationToken)
+        {
+            var requestData = new RemoveUserRequest
+            {
+                session_id = sessionId,
+                authorization_token = authorizationToken
+            };
+
+            var jsonContent = new StringContent(JsonConvert.SerializeObject(requestData), Encoding.UTF8, Constants.Services.Edgegap.API.JsonHeaderType);
+            HttpResponseMessage response = await httpClient.PostAsync($"{RelayUrl}/sessions:revoke-user", jsonContent);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new InvalidOperationException($"Error: {response.RequestMessage} - {response.ReasonPhrase}");
+            }
+            string responseContent = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<SessionResponse>(responseContent);
+        }
+
         private async Task PollDataAsync(HttpClient client, SessionResponse content, string sessionId)
         {
             //TODO say something when waiting for too long
@@ -146,18 +275,6 @@ namespace Services.Edgegap
             Debug.Log("Relay Service: Data is now ready!");
         }
 
-        public async Task<SessionResponse> JoinSessionAsync(string sessionId)
-        {
-            HttpResponseMessage response = await httpClient.GetAsync($"{RelayUrl}/sessions/" + sessionId);
-
-            //Catch bad session ID
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new InvalidOperationException($"Error: {response.RequestMessage} - {response.ReasonPhrase}");
-            }
-
-            string responseContent = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<SessionResponse>(responseContent);
-        }
+        #endregion
     }
 }

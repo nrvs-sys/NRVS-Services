@@ -131,7 +131,12 @@ namespace Services.Edgegap
             return new() { lobbyIps = lobbyIps, isError = false } ;
         }
 
-        async Task UpdatePublicIp()
+        /// <summary>
+        /// Gets the local player's public IP and writes it to their lobby player data.
+        /// Called reactively when the lobby IP lookup state changes to RequestingInfo,
+        /// and also proactively when a late joiner enters a lobby that already has an active relay session.
+        /// </summary>
+        public async Task UpdatePublicIp()
         {
             var ipUtility = Ref.Get<IpUtility>();
             var ip = await ipUtility.GetIpAddress();
@@ -142,6 +147,8 @@ namespace Services.Edgegap
             if (lobbyManager.joinedLobby != null && lobbyPlayer != null)
             {
                 await lobbyManager.SetPlayerDataValue(lobbyManager.joinedLobby, lobbyPlayer, new(Constants.Services.Edgegap.LobbyPlayerDataKeys.PublicIp, ip, PlayerDataObject.VisibilityOptions.Member));
+
+                onPublicIpReceived?.Invoke(ip);
             }
             else
             {
@@ -169,7 +176,7 @@ namespace Services.Edgegap
         {
             if (instance is LobbyManager lobbyManager)
             {
-                lobbyManager.onLobbyJoined.RemoveListener(LobbyManager_OnJoinedLobbyUpdated);
+                lobbyManager.onLobbyJoined.RemoveListener(LobbyManager_OnLobbyJoined);
                 lobbyManager.onJoinedLobbyUpdated.RemoveListener(LobbyManager_OnJoinedLobbyUpdated);
             }
         }
@@ -182,7 +189,16 @@ namespace Services.Edgegap
             {
                 _ = lobbyManager.SetLobbyDataValue(lobby, new(Constants.Services.Edgegap.LobbyDataKeys.LobbyIPLookupState, LobbyIpLookupState.Idle.ToString(), DataObject.VisibilityOptions.Member));
             }
-
+            else
+            {
+                // Late joiner: if a relay session is already active, proactively upload our IP
+                // so the host can authorize us without re-running the full IP collection flow.
+                if (Ref.TryGet(out RelayManager relayManager) && !string.IsNullOrEmpty(relayManager.RelaySessionId))
+                {
+                    Debug.Log("Lobby IP Manager: Late joiner detected active relay session — uploading public IP.");
+                    _ = UpdatePublicIp();
+                }
+            }
         }
 
         void LobbyManager_OnJoinedLobbyUpdated(Lobby lobby)
@@ -206,7 +222,7 @@ namespace Services.Edgegap
                             break;
                         case LobbyIpLookupState.RequestingInfo:
                             // Get the public IP of this client and update the lobby player data
-                            var _ = UpdatePublicIp();
+                            _ = UpdatePublicIp();
                             break;
                         case LobbyIpLookupState.Complete:
                             break;
