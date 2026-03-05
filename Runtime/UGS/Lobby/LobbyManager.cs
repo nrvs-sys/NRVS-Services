@@ -371,20 +371,28 @@ namespace Services.UGS
         public void StartHostLobby(Dictionary<string, DataObject> lobbyData, bool isPrivate)
         {
             if (hostingLobbyCoroutine != null)
+            {
+                Debug.Log("Lobby Manager: StartHostLobby - Already hosting, ignoring request.");
                 return;
+            }
 
+            Debug.Log($"Lobby Manager: StartHostLobby - isPrivate={isPrivate}, lobbyData keys={lobbyData?.Count ?? 0}");
             hostingLobbyCoroutine = StartCoroutine(DoHostLobby(lobbyData, isPrivate));
         }
 
         IEnumerator DoHostLobby(Dictionary<string, DataObject> lobbyData, bool isPrivate)
         {
+            Debug.Log("Lobby Manager: DoHostLobby - Waiting for initialization...");
             ILeaderboardPlatform leaderboardPlatform = null;
 
             while (!isInitialized || !Ref.TryGet(out leaderboardPlatform) || !leaderboardPlatform.isLoggedIn)
                 yield return null;
 
+            Debug.Log("Lobby Manager: DoHostLobby - Initialization complete, proceeding.");
+
             if (joinedLobby == null)
             {
+                Debug.Log($"Lobby Manager: DoHostLobby - Creating lobby for '{leaderboardPlatform.displayName}' with maxSize={maxLobbySize}...");
                 var t = Task.Run(async () => await CreateLobby($"{leaderboardPlatform.displayName}'s Lobby", maxLobbySize, new()
                 {
                     IsPrivate = isPrivate,
@@ -394,13 +402,24 @@ namespace Services.UGS
 
                 yield return new WaitUntil(() => t.IsCompleted);
 
+                if (t.Result != null)
+                    Debug.Log($"Lobby Manager: DoHostLobby - Lobby created successfully: {t.Result.Id}");
+                else
+                    Debug.LogWarning("Lobby Manager: DoHostLobby - Lobby creation returned null.");
+
                 LobbyJoined(t.Result);
             }
+            else
+            {
+                Debug.Log($"Lobby Manager: DoHostLobby - Already in lobby {joinedLobby.Id}, skipping creation.");
+            }
 
+            Debug.Log($"Lobby Manager: DoHostLobby - Invoking onLobbyHosted. Lobby={joinedLobby?.Id}");
             onLobbyHosted?.Invoke(joinedLobby);
 
             yield return new WaitForSecondsRealtime(heartbeatPingInterval);
 
+            Debug.Log("Lobby Manager: DoHostLobby - Starting heartbeat ping loop.");
             while (IsLocalPlayerLobbyHost())
             {
                 _ = SendHeartbeatPing(joinedLobby.Id);
@@ -413,6 +432,8 @@ namespace Services.UGS
 
         public async Task StopHostLobby(bool deleteLobby)
         {
+            Debug.Log($"Lobby Manager: StopHostLobby - deleteLobby={deleteLobby}");
+
             if (hostingLobbyCoroutine != null)
                 StopCoroutine(hostingLobbyCoroutine);
 
@@ -498,6 +519,7 @@ namespace Services.UGS
 
         public async Task JoinLobbyByID(string ID)
         {
+            Debug.Log($"Lobby Manager: JoinLobbyByID - ID={ID}");
             var lobby = await JoinLobbyByID(ID, new()
             {
                 Player = CreateLocalPlayer()
@@ -508,6 +530,7 @@ namespace Services.UGS
 
         public async Task<Lobby> JoinLobbyByCode(string code)
         {
+            Debug.Log($"Lobby Manager: JoinLobbyByCode - code={code}");
             var lobby = await JoinLobbyByCode(code, new()
             {
                 Player = CreateLocalPlayer()
@@ -520,6 +543,7 @@ namespace Services.UGS
 
         public async Task<Lobby> QuickJoinLobby(List<QueryFilter> filters = null)
         {
+            Debug.Log($"Lobby Manager: QuickJoinLobby - filters={filters?.Count ?? 0}");
             var lobby = await QuickJoinLobby(new QuickJoinLobbyOptions()
             {
                 Player = CreateLocalPlayer(),
@@ -534,8 +558,12 @@ namespace Services.UGS
         async void LobbyJoined(Lobby lobby)
         {
             if (!IsLocalPlayerInLobby(lobby))
+            {
+                Debug.LogWarning($"Lobby Manager: LobbyJoined - Local player not found in lobby {lobby?.Id}, aborting join flow.");
                 return;
-            
+            }
+
+            Debug.Log($"Lobby Manager: LobbyJoined - Joined lobby {lobby.Id} (Name={lobby.Name}, Players={lobby.Players?.Count}, Host={lobby.HostId}).");
             joinedLobby = lobby;
 
             // Create callbacks for the various lobby events
@@ -545,6 +573,7 @@ namespace Services.UGS
             {
                 if (changes.LobbyDeleted)
                 {
+                    Debug.Log("Lobby Manager: LobbyChanged - Lobby was deleted, leaving...");
                     _ = LeaveJoinedLobby();
                 }
                 else if (joinedLobby != null)
@@ -559,9 +588,15 @@ namespace Services.UGS
                         var latestLobby = await GetLobby(joinedLobby.Id);
 
                         if (latestLobby != null)
+                        {
                             joinedLobby = latestLobby;
+                            Debug.Log($"Lobby Manager: LobbyChanged - Retrieved full lobby state. Version={latestLobby.Version}, Players={latestLobby.Players?.Count}");
+                        }
                         else
+                        {
+                            Debug.LogWarning("Lobby Manager: LobbyChanged - Failed to retrieve full lobby state.");
                             return;
+                        }
                     }
                     else
                     {
@@ -666,6 +701,7 @@ namespace Services.UGS
 
             if (IsLocalPlayerLobbyHost())
             {
+                Debug.Log($"Lobby Manager: LeaveJoinedLobby - Local player is host. enableHostMigration={enableHostMigration}, playerCount={joinedLobby?.Players?.Count}");
                 await StopHostLobby(!enableHostMigration || joinedLobby.Players.Count <= 1);
             }
             else
@@ -674,6 +710,7 @@ namespace Services.UGS
                 {
                     var leftLobby = joinedLobby;
 
+                    Debug.Log($"Lobby Manager: LeaveJoinedLobby - Removing local player {localPlayerId} from lobby {joinedLobby.Id}.");
                     _ = RemovePlayer(joinedLobby.Id, localPlayerId);
 
                     joinedLobby = null;
@@ -686,6 +723,10 @@ namespace Services.UGS
                     onLobbyLeft?.Invoke(leftLobby);
 
                     onLobbiesLoaded?.Invoke(availableLobbies);
+                }
+                else
+                {
+                    Debug.Log("Lobby Manager: LeaveJoinedLobby - joinedLobby is already null, nothing to leave.");
                 }
             }
         }
@@ -779,6 +820,7 @@ namespace Services.UGS
             if (lobby == null)
                 return null;
 
+            Debug.Log($"Lobby Manager: SetLobbyLocked - lobby={lobby.Id}, locked={locked}");
             return await UpdateLobby(lobby.Id, new() { IsLocked = locked });
         }
 
@@ -786,6 +828,8 @@ namespace Services.UGS
         {
             if (lobby == null)
                 return null;
+
+            Debug.Log($"Lobby Manager: SetLobbyPrivate - lobby={lobby.Id}, isPrivate={isPrivate}");
             return await UpdateLobby(lobby.Id, new() { IsPrivate = isPrivate });
         }
 
@@ -847,21 +891,34 @@ namespace Services.UGS
 
         void StartHeartbeat()
         {
-            if (heartbeatCoroutine != null) return;
-            if (!IsLocalPlayerInJoinedLobby()) return;
+            if (heartbeatCoroutine != null)
+            {
+                Debug.Log("Lobby Manager: StartHeartbeat - Heartbeat already running.");
+                return;
+            }
+            if (!IsLocalPlayerInJoinedLobby())
+            {
+                Debug.Log("Lobby Manager: StartHeartbeat - Local player not in joined lobby, skipping.");
+                return;
+            }
+            Debug.Log($"Lobby Manager: StartHeartbeat - Starting client heartbeat (interval={heartbeatIntervalSec}s).");
             heartbeatCoroutine = StartCoroutine(DoHeartbeat());
         }
 
         void StopHeartbeat()
         {
             if (heartbeatCoroutine != null)
+            {
+                Debug.Log("Lobby Manager: StopHeartbeat - Stopping client heartbeat.");
                 StopCoroutine(heartbeatCoroutine);
+            }
             heartbeatCoroutine = null;
         }
 
         IEnumerator DoHeartbeat()
         {
             // Write an immediate first beat
+            Debug.Log("Lobby Manager: DoHeartbeat - Sending initial heartbeat.");
             _ = UpdateLocalPlayerDataAsync(new Dictionary<string, PlayerDataObject>
             {
                 [kHeartbeatKey] = new(PlayerDataObject.VisibilityOptions.Member, NowUnixSecondsString())
@@ -879,6 +936,7 @@ namespace Services.UGS
                 yield return wait;
             }
 
+            Debug.Log("Lobby Manager: DoHeartbeat - Local player left lobby, heartbeat stopped.");
             heartbeatCoroutine = null;
         }
 
@@ -887,7 +945,10 @@ namespace Services.UGS
             if (IsLocalPlayerLobbyHost(joinedLobby))
             {
                 if (hostWatchdogCoroutine == null)
+                {
+                    Debug.Log($"Lobby Manager: StartOrStopHostWatchdog - Starting watchdog (timeout={heartbeatTimeoutSec}s).");
                     hostWatchdogCoroutine = StartCoroutine(DoStaleKickWatchdog());
+                }
             }
             else
             {
@@ -898,7 +959,10 @@ namespace Services.UGS
         void StopHostWatchdog()
         {
             if (hostWatchdogCoroutine != null)
+            {
+                Debug.Log("Lobby Manager: StopHostWatchdog - Stopping host watchdog.");
                 StopCoroutine(hostWatchdogCoroutine);
+            }
             hostWatchdogCoroutine = null;
         }
 
@@ -954,6 +1018,7 @@ namespace Services.UGS
                 yield return wait;
             }
 
+            Debug.Log("Lobby Manager: DoStaleKickWatchdog - No longer host or lobby is null, watchdog stopped.");
             hostWatchdogCoroutine = null;
         }
 
@@ -1035,7 +1100,7 @@ namespace Services.UGS
             {
                 Debug.Log($"Lobby Manager: Request - Creating lobby {name}...");
                 var lobby = await LobbyService.Instance.CreateLobbyAsync(name, maxPlayers, options);
-                Debug.Log($"Lobby Manager: Lobby {lobby.Name} created!");
+                Debug.Log($"Lobby Manager: Lobby {lobby.Name} created! (ID={lobby.Id}, Code={lobby.LobbyCode})");
                 return lobby;
             }
             catch (LobbyServiceException e) { Debug.LogError(e); }
@@ -1050,7 +1115,9 @@ namespace Services.UGS
             try
             {
                 Debug.Log($"Lobby Manager: Request - Getting lobby {ID}...");
-                return await LobbyService.Instance.GetLobbyAsync(ID);
+                var lobby = await LobbyService.Instance.GetLobbyAsync(ID);
+                Debug.Log($"Lobby Manager: GetLobby - Retrieved lobby {ID} (Players={lobby.Players?.Count}, Version={lobby.Version}).");
+                return lobby;
             }
             catch (LobbyServiceException e) { Debug.Log(e); }
             return null;
@@ -1063,8 +1130,8 @@ namespace Services.UGS
 
             try
             {
-                Debug.Log($"Lobby Manager: Request - Updating lobby {ID}...");
-                return await LobbyService.Instance.UpdateLobbyAsync(ID, options);
+                var lobby = await LobbyService.Instance.UpdateLobbyAsync(ID, options);
+                return lobby;
             }
             catch (LobbyServiceException e) { Debug.LogError(e); }
             return null;
@@ -1079,6 +1146,7 @@ namespace Services.UGS
             {
                 Debug.Log($"Lobby Manager: Request - Deleting lobby {ID}...");
                 await LobbyService.Instance.DeleteLobbyAsync(ID);
+                Debug.Log($"Lobby Manager: DeleteLobby - Lobby {ID} deleted successfully.");
             }
             catch (LobbyServiceException e) { Debug.LogError(e); }
         }
@@ -1119,7 +1187,9 @@ namespace Services.UGS
             try
             {
                 Debug.Log($"Lobby Manager: Request - Joining lobby {ID}...");
-                return await LobbyService.Instance.JoinLobbyByIdAsync(ID, options);
+                var lobby = await LobbyService.Instance.JoinLobbyByIdAsync(ID, options);
+                Debug.Log($"Lobby Manager: JoinLobbyByID - Successfully joined lobby {lobby.Id} (Name={lobby.Name}).");
+                return lobby;
             }
             catch (LobbyServiceException e) { Debug.LogError(e); }
             return null;
@@ -1133,7 +1203,9 @@ namespace Services.UGS
             try
             {
                 Debug.Log($"Lobby Manager: Request - Joining lobby by code {code}...");
-                return await LobbyService.Instance.JoinLobbyByCodeAsync(code, options);
+                var lobby = await LobbyService.Instance.JoinLobbyByCodeAsync(code, options);
+                Debug.Log($"Lobby Manager: JoinLobbyByCode - Successfully joined lobby {lobby.Id} (Name={lobby.Name}).");
+                return lobby;
             }
             catch (LobbyServiceException e) { Debug.LogError(e); }
             return null;
@@ -1147,7 +1219,9 @@ namespace Services.UGS
             try
             {
                 Debug.Log("Lobby Manager: Request - Quick joining lobby...");
-                return await LobbyService.Instance.QuickJoinLobbyAsync(options);
+                var lobby = await LobbyService.Instance.QuickJoinLobbyAsync(options);
+                Debug.Log($"Lobby Manager: QuickJoinLobby - Successfully quick-joined lobby {lobby.Id} (Name={lobby.Name}).");
+                return lobby;
             }
             catch (LobbyServiceException e) { Debug.LogError(e); }
             return null;
@@ -1163,7 +1237,10 @@ namespace Services.UGS
             {
                 if (logRequest)
                     Debug.Log($"Lobby Manager: Request - Updating player {playerID} in lobby {lobbyID}...");
-                return await LobbyService.Instance.UpdatePlayerAsync(lobbyID, playerID, options);
+                var lobby = await LobbyService.Instance.UpdatePlayerAsync(lobbyID, playerID, options);
+                if (logRequest)
+                    Debug.Log($"Lobby Manager: UpdatePlayer - Player {playerID} updated successfully in lobby {lobbyID}.");
+                return lobby;
             }
             catch (LobbyServiceException e) { Debug.LogError(e); }
             return null;
@@ -1178,6 +1255,7 @@ namespace Services.UGS
             {
                 Debug.Log($"Lobby Manager: Request - Removing player {playerID} from lobby {lobbyID}...");
                 await LobbyService.Instance.RemovePlayerAsync(lobbyID, playerID);
+                Debug.Log($"Lobby Manager: RemovePlayer - Player {playerID} removed successfully from lobby {lobbyID}.");
             }
             catch (LobbyServiceException e) { Debug.LogError(e); }
         }
