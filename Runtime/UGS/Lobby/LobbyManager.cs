@@ -383,7 +383,6 @@ namespace Services.UGS
         IEnumerator DoHostLobby(Dictionary<string, DataObject> lobbyData, bool isPrivate)
         {
             Debug.Log("Lobby Manager: DoHostLobby - Waiting for initialization...");
-            ILeaderboardPlatform leaderboardPlatform = null;
 
             while (!isInitialized)
                 yield return null;
@@ -392,8 +391,8 @@ namespace Services.UGS
 
             if (joinedLobby == null)
             {
-                Debug.Log($"Lobby Manager: DoHostLobby - Creating lobby for '{leaderboardPlatform.displayName}' with maxSize={maxLobbySize}...");
-                var t = Task.Run(async () => await CreateLobby($"{leaderboardPlatform.displayName}'s Lobby", maxLobbySize, new()
+                Debug.Log($"Lobby Manager: DoHostLobby - Creating lobby for '{displayName}' with maxSize={maxLobbySize}...");
+                var t = Task.Run(async () => await CreateLobby($"{displayName}'s Lobby", maxLobbySize, new()
                 {
                     IsPrivate = isPrivate,
                     Player = CreateLocalPlayer(),
