@@ -385,7 +385,7 @@ namespace Services.UGS
             Debug.Log("Lobby Manager: DoHostLobby - Waiting for initialization...");
             ILeaderboardPlatform leaderboardPlatform = null;
 
-            while (!isInitialized || !Ref.TryGet(out leaderboardPlatform) || !leaderboardPlatform.isLoggedIn)
+            while (!isInitialized)
                 yield return null;
 
             Debug.Log("Lobby Manager: DoHostLobby - Initialization complete, proceeding.");
