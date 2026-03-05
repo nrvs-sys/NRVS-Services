@@ -203,6 +203,8 @@ namespace Services.UGS
 
         public UnityEvent<Lobby> onLobbyJoined;
 
+        public UnityEvent<string> onJoinedLobbyNameUpdated;
+
         public UnityEvent<Lobby> onJoinedLobbyUpdated;
 
         public UnityEvent<Lobby> onLobbyLeft;
@@ -570,6 +572,12 @@ namespace Services.UGS
 
             callbacks.LobbyChanged += async changes =>
             {
+                if (changes.Name.Changed)
+                {
+                    var name = changes.Name.Value ?? "null";
+                    Debug.Log($"Lobby Manager: LobbyChanged - Name changed to {name}");
+                    onJoinedLobbyNameUpdated?.Invoke(name);
+                }
                 if (changes.LobbyDeleted)
                 {
                     Debug.Log("Lobby Manager: LobbyChanged - Lobby was deleted, leaving...");
@@ -754,7 +762,7 @@ namespace Services.UGS
         id: localPlayerId,
         data: new()
         {
-            { Constants.Services.UGS.Lobbies.PlayerDataKeys.DisplayName, new(PlayerDataObject.VisibilityOptions.Member, Ref.TryGet(out ILeaderboardPlatform leaderboardPlatform) ? leaderboardPlatform.displayName : "") },
+            { Constants.Services.UGS.Lobbies.PlayerDataKeys.DisplayName, new(PlayerDataObject.VisibilityOptions.Member, displayName) },
             { Constants.Services.UGS.Lobbies.PlayerDataKeys.IsReady, new(PlayerDataObject.VisibilityOptions.Member, false.ToString()) }
         }
         );

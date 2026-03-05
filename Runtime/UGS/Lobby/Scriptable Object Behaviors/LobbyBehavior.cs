@@ -10,6 +10,14 @@ public class LobbyBehavior : ScriptableObject
     public void JoinLobbyByCode(string code) => Ref.Get<LobbyManager>()?.JoinLobbyByCode(code);
     public void LeaveJoinedLobby() => Ref.Get<LobbyManager>()?.LeaveJoinedLobby();
 
+    public void SetLobbyName(string name)
+    {
+        if (Ref.TryGet<LobbyManager>(out var lobbyManager) && lobbyManager.IsLocalPlayerLobbyHost())
+        {
+            _ = lobbyManager.UpdateLobby(lobbyManager.joinedLobby.Id, new() { Name = name });
+        }
+    }
+
     public void SetLobbyAsUnlocked()
     {
         if (Ref.TryGet<LobbyManager>(out var lobbyManager) && lobbyManager.IsLocalPlayerLobbyHost())
@@ -47,6 +55,14 @@ public class LobbyBehavior : ScriptableObject
         if (Ref.TryGet<LobbyManager>(out var lobbyManager) && lobbyManager.IsLocalPlayerInJoinedLobby())
         {
             _ = lobbyManager.SetPlayerDataValue(lobbyManager.joinedLobby, lobbyManager.GetLocalPlayer(), new(Constants.Services.UGS.Lobbies.PlayerDataKeys.IsReady, isReady.ToString(), Unity.Services.Lobbies.Models.PlayerDataObject.VisibilityOptions.Member));
+        }
+    }
+
+    public void SetPlayerName(string name)
+    {
+        if (Ref.TryGet<LobbyManager>(out var lobbyManager) && lobbyManager.IsLocalPlayerInJoinedLobby())
+        {
+            _ = lobbyManager.SetPlayerDataValue(lobbyManager.joinedLobby, lobbyManager.GetLocalPlayer(), new(Constants.Services.UGS.Lobbies.PlayerDataKeys.DisplayName, name, Unity.Services.Lobbies.Models.PlayerDataObject.VisibilityOptions.Member));
         }
     }
 
