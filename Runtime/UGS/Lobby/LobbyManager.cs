@@ -520,6 +520,8 @@ namespace Services.UGS
 
         public async Task JoinLobbyByID(string ID)
         {
+            await LeaveJoinedLobby();
+
             Debug.Log($"Lobby Manager: JoinLobbyByID - ID={ID}");
             var lobby = await JoinLobbyByID(ID, new()
             {
@@ -531,6 +533,8 @@ namespace Services.UGS
 
         public async Task<Lobby> JoinLobbyByCode(string code)
         {
+            await LeaveJoinedLobby();
+
             Debug.Log($"Lobby Manager: JoinLobbyByCode - code={code}");
             var lobby = await JoinLobbyByCode(code, new()
             {
@@ -544,6 +548,8 @@ namespace Services.UGS
 
         public async Task<Lobby> QuickJoinLobby(List<QueryFilter> filters = null)
         {
+            await LeaveJoinedLobby();
+
             Debug.Log($"Lobby Manager: QuickJoinLobby - filters={filters?.Count ?? 0}");
             var lobby = await QuickJoinLobby(new QuickJoinLobbyOptions()
             {
