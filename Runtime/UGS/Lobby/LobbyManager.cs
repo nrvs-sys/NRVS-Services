@@ -623,7 +623,9 @@ namespace Services.UGS
                 }
             };
 
-            callbacks.PlayerDataAdded += changes =>
+            callbacks.PlayerJoined += players =>
+            {
+                Debug.Log($"Lobby Manager: PlayerJoined - Player(s) {players.ToString()} joined the lobby.");
                 onJoinedLobbyUpdated?.Invoke(joinedLobby);
             };
 
@@ -631,6 +633,9 @@ namespace Services.UGS
             {
                 Debug.Log($"Lobby Manager: PlayerLeft - Player(s) {players.ToString()} left the lobby.");
                 onJoinedLobbyUpdated?.Invoke(joinedLobby);
+            };
+
+                callbacks.PlayerDataAdded += changes =>
             {
                 onJoinedLobbyUpdated?.Invoke(joinedLobby);
             };
