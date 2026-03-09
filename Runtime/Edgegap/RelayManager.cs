@@ -171,6 +171,10 @@ namespace Services.Edgegap
             if (!IsRelayHost || string.IsNullOrEmpty(RelaySessionId))
                 return;
 
+            StopClientAuthorizationCoroutine();
+            StopRelaySessionOnClients();
+
+
             try
             {
                 Debug.Log($"Relay Manager: Deleting relay session {RelaySessionId}");
@@ -519,6 +523,16 @@ namespace Services.Edgegap
             {
                 Debug.Log("Relay Manager: Sending Relay Session to clients");
                 _ = lobbyManager.SetLobbyDataValues(lobbyManager.joinedLobby, new LobbyManager.LobbyDataValue(Constants.Services.Edgegap.Relay.LobbyDataKeys.RelaySessionId, relaySessionId, DataObject.VisibilityOptions.Member));
+            }
+        }
+
+        void StopRelaySessionOnClients()
+        {
+            var lobbyManager = Ref.Get<LobbyManager>();
+            if (lobbyManager != null && lobbyManager.IsLocalPlayerLobbyHost())
+            {
+                Debug.Log("Relay Manager: Clearing Relay Session from lobby data");
+                _ = lobbyManager.SetLobbyDataValues(lobbyManager.joinedLobby, new LobbyManager.LobbyDataValue(Constants.Services.Edgegap.Relay.LobbyDataKeys.RelaySessionId, "", DataObject.VisibilityOptions.Member));
             }
         }
 
