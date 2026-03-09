@@ -64,6 +64,11 @@ namespace Services.Edgegap
         public RelayService.SessionResponse CurrentSession { get; private set; }
 
         /// <summary>
+        /// True when this instance created (hosts) the current relay session.
+        /// </summary>
+        public bool IsRelayHost { get; private set; }
+
+        /// <summary>
         /// Tracks player IDs whose IPs have already been authorized on the relay,
         /// so we don't double-authorize on every lobby update.
         /// </summary>
@@ -117,6 +122,98 @@ namespace Services.Edgegap
             StopClientAuthorizationCoroutine();
         }
 
+        void OnApplicationQuit()
+        {
+            _ = DeleteSessionIfHostAsync();
+        }
+
+        #endregion
+
+        #region Session Management Methods
+
+        /// <summary>
+        /// Creates a new relay session, stores it, and marks this instance as the relay host.
+        /// Returns the session response for callers that need relay connection data.
+        /// </summary>
+        public async Task<RelayService.SessionResponse> CreateSessionAsync(List<string> clientIps)
+        {
+            var response = await GetRelayService().CreateSessionAsync(clientIps);
+            IsRelayHost = true;
+            SetSession(response);
+            return response;
+        }
+
+        /// <summary>
+        /// Joins an existing relay session by ID.
+        /// Returns the session response for callers that need relay connection data.
+        /// </summary>
+        public async Task<RelayService.SessionResponse> JoinSessionAsync()
+        {
+            if (string.IsNullOrEmpty(RelaySessionId))
+            {
+                Debug.LogError("Relay Manager: No relay session ID available. Cannot join.");
+                return null;
+            }
+
+            var response = await GetRelayService().JoinSessionAsync(RelaySessionId);
+            CurrentSession = response;
+            return response;
+        }
+
+        /// <summary>
+        /// Deletes the current relay session if this instance is the host.
+        /// Safe to call from <see cref="OnApplicationQuit"/> or when tearing down the session.
+        /// </summary>
+        public async Task DeleteSessionIfHostAsync()
+        {
+            if (!IsRelayHost || string.IsNullOrEmpty(RelaySessionId))
+                return;
+
+            try
+            {
+                Debug.Log($"Relay Manager: Deleting relay session {RelaySessionId}");
+                await GetRelayService().DeleteSessionAsync(RelaySessionId);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"Relay Manager: Failed to delete relay session: {e.Message}");
+            }
+            finally
+            {
+                IsRelayHost = false;
+                ClearSession();
+            }
+        }
+
+        /// <summary>
+        /// Finds the local player's <see cref="RelayService.SessionUser"/> in the given session response
+        /// by matching their public IP from lobby data.
+        /// </summary>
+        public RelayService.SessionUser GetLocalSessionUser(RelayService.SessionResponse response)
+        {
+            if (response?.session_users == null || response.session_users.Count == 0)
+            {
+                Debug.LogError("Relay Manager: No session users found in the response.");
+                return null;
+            }
+
+            if (Ref.TryGet(out LobbyManager lobbyManager))
+            {
+                var localIP = lobbyManager.GetPlayerDataValue(
+                    lobbyManager.GetLocalPlayer(),
+                    Constants.Services.Edgegap.LobbyPlayerDataKeys.PublicIp);
+
+                var user = response.session_users.Find(u => u.ip_address == localIP);
+
+                if (user == null)
+                    Debug.LogError("Relay Manager: Local player not found in session users.");
+
+                return user;
+            }
+
+            return null;
+        }
+
         #endregion
 
         #region Session State Methods
@@ -125,7 +222,7 @@ namespace Services.Edgegap
         /// Called by the host after creating a relay session. Stores the session,
         /// seeds the authorized set with all initial players, and broadcasts the ID via lobby data.
         /// </summary>
-        public void SetSession(RelayService.SessionResponse session)
+        void SetSession(RelayService.SessionResponse session)
         {
             CurrentSession = session;
             RelaySessionId = session?.session_id ?? "";
@@ -158,7 +255,7 @@ namespace Services.Edgegap
         /// <summary>
         /// Clears all local relay state. Call when leaving a lobby or going offline.
         /// </summary>
-        public void ClearSession()
+        void ClearSession()
         {
             StopClientAuthorizationCoroutine();
             CurrentSession = null;
