@@ -160,6 +160,8 @@ namespace Services.Edgegap
             return response;
         }
 
+        public void DeleteSessionIfHost() => _ = DeleteSessionIfHostAsync();
+
         /// <summary>
         /// Deletes the current relay session if this instance is the host.
         /// Safe to call from <see cref="OnApplicationQuit"/> or when tearing down the session.
