@@ -193,11 +193,8 @@ namespace Services.Edgegap
             {
                 // Late joiner: if a relay session is already active, proactively upload our IP
                 // so the host can authorize us without re-running the full IP collection flow.
-                if (Ref.TryGet(out RelayManager relayManager) && !string.IsNullOrEmpty(relayManager.RelaySessionId))
-                {
-                    Debug.Log("Lobby IP Manager: Late joiner detected active relay session — uploading public IP.");
-                    _ = UpdatePublicIp();
-                }
+                Debug.Log("Lobby IP Manager: Late joiner detected active relay session — uploading public IP.");
+                _ = UpdatePublicIp();
             }
         }
 
