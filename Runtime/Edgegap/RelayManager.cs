@@ -586,6 +586,11 @@ namespace Services.Edgegap
                     // Client-side: session ID just arrived — begin the authorization wait
                     BeginWaitForAuthorization();
                 }
+                else
+                {
+                    // Session ID was cleared — stop any authorization wait in progress
+                    StopClientAuthorizationCoroutine();
+                }
             }
 
             // --- Host-side: authorize any late joiners whose IP is now available ---
