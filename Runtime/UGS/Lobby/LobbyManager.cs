@@ -413,6 +413,27 @@ namespace Services.UGS
             else
             {
                 Debug.Log($"Lobby Manager: DoHostLobby - Already in lobby {joinedLobby.Id}, skipping creation.");
+
+                if (!IsLocalPlayerLobbyHost())
+                {
+                    Debug.LogWarning($"Lobby Manager: DoHostLobby - Local player is not the host of the current lobby {joinedLobby.Id}, cannot update lobby data or privacy settings.");
+                    yield break;
+                }
+                else
+                {
+                    Debug.Log($"Lobby Manager: DoHostLobby - Updating existing lobby {joinedLobby.Id} with new data and privacy settings.");
+                    var t = Task.Run(async () => await UpdateLobby(joinedLobby.Id, new()
+                    {
+                        Data = lobbyData ?? joinedLobby.Data,
+                        IsPrivate = isPrivate
+                    }));
+                    yield return new WaitUntil(() => t.IsCompleted);
+                    if (t.Result != null)
+                        Debug.Log($"Lobby Manager: DoHostLobby - Lobby updated successfully: {t.Result.Id}");
+                    else
+                        Debug.LogWarning("Lobby Manager: DoHostLobby - Lobby update returned null.");
+                }
+
             }
 
             Debug.Log($"Lobby Manager: DoHostLobby - Invoking onLobbyHosted. Lobby={joinedLobby?.Id}");
